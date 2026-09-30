@@ -1,8 +1,8 @@
 <?php
-
 namespace App\Http\Controllers;
-
+use App\Models\Transaction;
 use Illuminate\Http\Request;
+
 
 class TransactionController extends Controller
 {
@@ -25,13 +25,16 @@ class TransactionController extends Controller
         return 'Transaksi disimpan (belum ada logika penyimpanan)';
     }
 
-   public function index()
+    public function index()
     {
-        return view('transactions.index');
+        $transactions = Transaction::latest()->paginate(15);
+
+        return view('transactions.index', compact('transactions'));
     }
 
     public function show(string $id)
     {
         return "Detail transaksi #{$id}";
     }
+    
 }
