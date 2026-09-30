@@ -1,8 +1,10 @@
 <?php
+
 namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\Http\Request;
 
+use Illuminate\Http\Request;
 
 class TransactionController extends Controller
 {
@@ -27,5 +29,4 @@ class TransactionController extends Controller
     {
         return "Detail transaksi #{$id}";
     }
-    
 }
