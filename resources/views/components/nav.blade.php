@@ -11,5 +11,10 @@
            class="{{ request()->routeIs('transactions.index') ? 'font-bold underline' : 'hover:underline' }}">
             Transaksi
         </a>
+
+        <a href="{{ route('products.index') }}"
+           class="{{ request()->routeIs('products.index') ? 'font-bold underline' : 'hover:underline' }}">
+            Produk
+        </a>
     </nav>
 </div>
