@@ -8,6 +8,7 @@ use App\Http\Requests\StoreTransactionRequest;
 use App\Models\TransactionDetail;
 use Illuminate\Support\Facades\DB;
 
+
 class TransactionController extends Controller
 {
     public function create()
