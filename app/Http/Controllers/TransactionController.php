@@ -8,7 +8,6 @@ use App\Http\Requests\StoreTransactionRequest;
 use App\Models\TransactionDetail;
 use Illuminate\Support\Facades\DB;
 
-
 class TransactionController extends Controller
 {
     public function create()
@@ -22,23 +21,14 @@ class TransactionController extends Controller
     {
         $validated = $request->validated();
 
-        // Validasi stok mencukupi
-        foreach ($validated['items'] as $item) {
-            $product = Product::findOrFail($item['product_id']);
-            if ($item['qty'] > $product->stock) {
-                return back()->withErrors([
-                    'items' => "Stok produk {$product->name} tidak mencukupi (Sisa: {$product->stock})."
-                ])->withInput();
-            }
-        }
-
         DB::transaction(function () use ($validated) {
             $transaction = Transaction::create([
-                'user_id' => 1,
+                'user_id' => 1, // sementara di-hardcode
                 'total' => 0,
             ]);
 
             $total = 0;
+
             foreach ($validated['items'] as $item) {
                 $product = Product::findOrFail($item['product_id']);
                 $subtotal = $product->price * $item['qty'];
@@ -59,7 +49,6 @@ class TransactionController extends Controller
             ->route('pos.create')
             ->with('success', 'Transaksi berhasil disimpan.');
     }
-
 
     public function index()
     {
