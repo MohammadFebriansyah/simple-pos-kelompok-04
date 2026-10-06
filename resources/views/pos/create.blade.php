@@ -11,9 +11,13 @@
     </div>
 @endif
 
-@error('items')
-    <div class="bg-red-50 text-red-700 p-3 rounded-md mb-4">{{ $message }}</div>
-@enderror
+@if ($errors->any())
+    <div class="bg-red-50 text-red-700 p-3 rounded-md mb-4">
+        @foreach ($errors->all() as $error)
+            <p>{{ $error }}</p>
+        @endforeach
+    </div>
+@endif
 
 <form method="POST" action="{{ route('transactions.store') }}" x-data="{
     cart: [],
