@@ -1,59 +1,87 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Simple POS - Kelompok 02 (SIB 3E)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi Point of Sale (POS) berbasis web menggunakan Laravel 11 dengan sistem otorisasi dan kontrol akses berbasis peran (*Role-Based Access Control*).
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Akun Uji Coba (Demo Accounts)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Data akun berikut telah disediakan melalui database seeder (`DemoUserSeeder`):
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Peran (Role) | Email | Password | Hak Akses Utama |
+| :--- | :--- | :--- | :--- |
+| **Admin** | `admin@pos.test` | `password` | Mengakses Kasir, Transaksi, serta mengelola Produk & Kategori |
+| **Kasir** | `kasir@pos.test` | `password` | Mengakses Kasir & melihat riwayat Transaksi (terbatas dari menu Admin) |
+| **Guest (Tamu)** | *(Tanpa Login)* | - | Mengakses halaman Login (`/login`) & Halaman Informasi (`/info`) |
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Skenario Uji Manual Berdasarkan Peran
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Berikut adalah skenario pengujian manual untuk setiap peran yang ada pada aplikasi:
 
-## Laravel Sponsors
+### 1. Skenario Uji: Peran Admin (`role: admin`)
+* **Tujuan**: Memastikan pengguna dengan peran Admin memiliki akses penuh ke seluruh fitur aplikasi, termasuk manajemen master data (Kategori & Produk).
+* **Akun Uji**: `admin@pos.test` / `password`
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+**Langkah-langkah:**
+1. Buka browser dan akses halaman login di `http://localhost:8000/login`.
+2. Masukkan email `admin@pos.test` dan password `password`, kemudian klik tombol **Login**.
+3. Periksa bilah navigasi (navbar) di bagian atas layar:
+   - Periksa identitas pengguna yang ditampilkan pada sudut kanan navbar.
+   - Periksa ketersediaan tautan menu navigasi.
+4. Klik menu **Produk** (`/products`) atau buka halaman tambah produk di `/products/create`.
+5. Klik menu **Kategori** (`/categories`) atau coba tambahkan kategori baru.
+6. Klik menu **Kasir** (`/pos`) dan lakukan simulasi transaksi.
+7. Klik tombol **Keluar** untuk mengakhiri sesi.
 
-### Premium Partners
+**Hasil yang Diharapkan:**
+- Pengguna berhasil login dan diarahkan ke halaman kasir POS (`/pos`).
+- Bilah navigasi menampilkan teks identitas `Admin Kafe (admin)`.
+- Semua menu navigasi ditampilkan: **Kasir**, **Transaksi**, **Produk**, dan **Kategori**.
+- Halaman `/products` dan `/categories` dapat diakses dengan status HTTP 200 (tanpa error 403 Forbidden).
+- Admin dapat melakukan operasi pengelolaan produk dan kategori secara normal.
+- Sesi berhasil diakhiri setelah menekan tombol Keluar dan pengguna kembali ke halaman login.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+---
 
-## Contributing
+### 2. Skenario Uji: Peran Kasir (`role: kasir`)
+* **Tujuan**: Memastikan pengguna dengan peran Kasir dapat mengakses transaksi kasir, namun **dibatasi dan ditolak** ketika mencoba mengakses halaman manajemen admin (Produk & Kategori).
+* **Akun Uji**: `kasir@pos.test` / `password`
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+**Langkah-langkah:**
+1. Buka browser dan akses halaman login di `http://localhost:8000/login`.
+2. Masukkan email `kasir@pos.test` dan password `password`, kemudian klik tombol **Login**.
+3. Periksa bilah navigasi (navbar) di bagian atas layar:
+   - Periksa identitas pengguna yang ditampilkan.
+   - Periksa ketersediaan tautan menu navigasi.
+4. Lakukan pembuatan transaksi pada halaman **Kasir** (`/pos`) dan periksa riwayat pada halaman **Transaksi** (`/transactions`).
+5. Coba akses rute manajemen produk secara langsung melalui address bar browser: ketik `http://localhost:8000/products` lalu tekan Enter.
+6. Coba akses rute manajemen kategori secara langsung melalui address bar browser: ketik `http://localhost:8000/categories` lalu tekan Enter.
+7. Klik tombol **Keluar** untuk mengakhiri sesi.
 
-## Code of Conduct
+**Hasil yang Diharapkan:**
+- Pengguna berhasil login dan diarahkan ke halaman kasir POS (`/pos`).
+- Bilah navigasi menampilkan teks identitas `Kasir Kafe (kasir)`.
+- Bilah navigasi **hanya** menampilkan menu **Kasir** dan **Transaksi**. Menu **Produk** dan **Kategori** tidak muncul (disembunyikan).
+- Halaman `/pos` dan `/transactions` dapat diakses dan digunakan secara normal untuk transaksi.
+- Saat mengakses `http://localhost:8000/products` atau `http://localhost:8000/categories`, sistem menolak akses dengan menampilkan error **HTTP 403 Forbidden** bertuliskan:  
+  `"Halaman ini hanya untuk peran admin."`
+- Rute admin berhasil dilindungi oleh middleware `role:admin`.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+### 3. Skenario Uji: Peran Guest / Tamu (`guest`)
+* **Tujuan**: Memastikan pengguna yang belum login tidak dapat mengakses halaman transaksi atau manajemen, serta hanya diizinkan mengakses halaman publik/tamu.
+* **Akun Uji**: Pengguna belum terautentikasi (gunakan tab *Incognito/Private Browsing*).
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+**Langkah-langkah:**
+1. Buka tab baru dalam mode *Incognito* / *Private Browsing* (kondisi belum login).
+2. Coba akses halaman kasir `http://localhost:8000/pos` atau riwayat transaksi `http://localhost:8000/transactions`.
+3. Coba akses halaman manajemen produk `http://localhost:8000/products` atau kategori `http://localhost:8000/categories`.
+4. Buka halaman informasi tamu di `http://localhost:8000/info`.
+5. Buka halaman login di `http://localhost:8000/login`.
 
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+**Hasil yang Diharapkan:**
+- Setiap upaya mengakses halaman `/pos`, `/transactions`, `/products`, maupun `/categories` akan secara otomatis dialihkan (*redirect*) ke halaman `/login`.
+- Halaman publik seperti `/info` dan `/login` dapat diakses dengan sukses tanpa hambatan autentikasi.
