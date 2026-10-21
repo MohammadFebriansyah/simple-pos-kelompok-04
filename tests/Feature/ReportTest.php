@@ -65,6 +65,37 @@ class ReportTest extends TestCase
         $this->assertTrue(str_contains($response->headers->get('content-type'), 'application/pdf'));
     }
 
+    public function test_reports_pdf_export_with_top_products_data(): void
+    {
+        $admin = $this->createAdmin();
+
+        $category = Category::create(['name' => 'Kopi']);
+        $product = Product::create([
+            'category_id' => $category->id,
+            'name' => 'Kopi Arabika Spesial',
+            'price' => 20000,
+            'stock' => 50,
+            'is_active' => true,
+        ]);
+
+        $transaction = Transaction::create([
+            'user_id' => $admin->id,
+            'total' => 40000,
+        ]);
+
+        \App\Models\TransactionDetail::create([
+            'transaction_id' => $transaction->id,
+            'product_id' => $product->id,
+            'qty' => 2,
+            'subtotal' => 40000,
+        ]);
+
+        $response = $this->actingAs($admin)->get('/reports/export/pdf');
+
+        $response->assertStatus(200);
+        $this->assertTrue(str_contains($response->headers->get('content-type'), 'application/pdf'));
+    }
+
     public function test_reports_excel_export(): void
     {
         $admin = $this->createAdmin();
