@@ -28,6 +28,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/pos', [TransactionController::class, 'store'])->name('transactions.store');
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
 
-    Route::resource('categories', CategoryController::class)->except('show');
-    Route::resource('products', ProductController::class)->except(['show', 'destroy']);
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('categories', CategoryController::class)->except('show');
+        Route::resource('products', ProductController::class)->except(['show', 'destroy']);
+    });
 });
