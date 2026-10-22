@@ -6,9 +6,11 @@
         Kasir
     </a>
 
-    <a href="{{ route('transactions.index') }}" class="hover:underline">
-        Transaksi
-    </a>
+    @if (auth()->user()?->isAdmin() || auth()->user()?->isManager())
+        <a href="{{ route('transactions.index') }}" class="hover:underline">
+            Transaksi
+        </a>
+    @endif
 
     @if (auth()->user()?->isAdmin())
         <a href="{{ route('products.index') }}" class="hover:underline">
