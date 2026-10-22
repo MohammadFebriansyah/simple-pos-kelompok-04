@@ -11,7 +11,8 @@ Data akun berikut telah disediakan melalui database seeder (`DemoUserSeeder`):
 | Peran (Role) | Email | Password | Hak Akses Utama |
 | :--- | :--- | :--- | :--- |
 | **Admin** | `admin@pos.test` | `password` | Mengakses Kasir, Transaksi, serta mengelola Produk & Kategori |
-| **Kasir** | `kasir@pos.test` | `password` | Mengakses Kasir & melihat riwayat Transaksi (terbatas dari menu Admin) |
+| **Manager** | `manager@pos.test` | `password` | Mengakses Kasir & Transaksi (tidak boleh mengelola Produk & Kategori) |
+| **Kasir** | `kasir@pos.test` | `password` | Mengakses Kasir (terbatas dari Transaksi & menu Admin) |
 | **Guest (Tamu)** | *(Tanpa Login)* | - | Mengakses halaman Login (`/login`) & Halaman Informasi (`/info`) |
 
 ---
@@ -85,3 +86,21 @@ Berikut adalah skenario pengujian manual untuk setiap peran yang ada pada aplika
 **Hasil yang Diharapkan:**
 - Setiap upaya mengakses halaman `/pos`, `/transactions`, `/products`, maupun `/categories` akan secara otomatis dialihkan (*redirect*) ke halaman `/login`.
 - Halaman publik seperti `/info` dan `/login` dapat diakses dengan sukses tanpa hambatan autentikasi.
+
+---
+
+### 4. Skenario Uji: Peran Manager (`role: manager`)
+* **Tujuan**: Memastikan pengguna dengan peran Manager dapat mengakses kasir dan melihat riwayat transaksi, namun **dilarang** mengelola master data Produk dan Kategori.
+* **Akun Uji**: `manager@pos.test` / `password`
+
+**Langkah-langkah:**
+1. Buka browser dan login menggunakan akun `manager@pos.test` dengan password `password`.
+2. Periksa navbar: menu **Kasir** dan **Transaksi** muncul, menu **Produk** dan **Kategori** disembunyikan.
+3. Buka halaman riwayat transaksi di `http://localhost:8000/transactions`.
+4. Coba akses rute produk secara langsung di `http://localhost:8000/products`.
+5. Coba akses rute kategori secara langsung di `http://localhost:8000/categories`.
+
+**Hasil yang Diharapkan:**
+- Pengguna berhasil login dan diarahkan ke `/pos`.
+- Halaman `/transactions` dapat diakses secara normal (HTTP 200).
+- Saat mengakses `/products` atau `/categories`, sistem menampilkan error **HTTP 403 Forbidden**.
