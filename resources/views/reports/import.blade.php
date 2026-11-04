@@ -26,4 +26,29 @@
         <button type="submit" formaction="{{ route('import.excel.store') }}" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm">Import Laravel Excel</button>
     </div>
 </form>
+
+{{-- DITAMBAHKAN DI SINI (Tabel Log Error Import): --}}
+@if (isset($importErrors) && $importErrors->count() > 0)
+    <div class="mt-6 border-t pt-4">
+        <h2 class="text-md font-semibold text-red-600 mb-3">Daftar Baris yang Gagal Di-import</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm border-collapse border border-slate-200">
+                <thead>
+                    <tr class="bg-slate-100">
+                        <th class="border border-slate-200 px-3 py-2 text-left">Baris Ke</th>
+                        <th class="border border-slate-200 px-3 py-2 text-left">Pesan Error</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($importErrors as $error)
+                        <tr>
+                            <td class="border border-slate-200 px-3 py-2 font-medium">{{ $error->row_number }}</td>
+                            <td class="border border-slate-200 px-3 py-2 text-red-600">{{ $error->error_message }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+@endif
 @endsection
