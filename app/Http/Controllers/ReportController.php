@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Imports\ProductsImport;
 use App\Models\Product;
 use App\Models\Transaction;
 use Illuminate\Database\Eloquent\Builder;
@@ -9,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
+use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportController extends Controller
@@ -95,6 +97,31 @@ class ReportController extends Controller
         }
 
         return back()->with('success', "{$created} produk baru, {$updated} diperbarui.");
+    }
+
+    public function importExcel(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'csv' => ['required', 'file', 'mimes:csv,txt'],
+        ]);
+
+        // Periksa header saja; data selanjutnya dibaca per chunk oleh Laravel Excel.
+        $handle = fopen($request->file('csv')->getRealPath(), 'r');
+        $header = fgetcsv($handle);
+        fclose($handle);
+
+        if ($header) {
+            $header[0] = preg_replace('/^\xEF\xBB\xBF/', '', $header[0]);
+        }
+
+        if (! $header || array_diff(['name', 'category_id', 'price'], $header)) {
+            return back()->withErrors(['csv' => 'CSV harus memiliki header name,category_id,price dengan pemisah koma.']);
+        }
+
+        $import = new ProductsImport;
+        Excel::import($import, $request->file('csv'), null, \Maatwebsite\Excel\Excel::CSV);
+
+        return back()->with('success', "{$import->created} produk baru, {$import->updated} diperbarui. (Laravel Excel)");
     }
 
     private function resolveDateRange(Request $request): array
