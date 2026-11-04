@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\ImportError;
 use App\Models\Product;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -32,6 +33,8 @@ class ProcessProductImport implements ShouldQueue
             throw new RuntimeException('File CSV tidak ditemukan.');
         }
 
+        ImportError::truncate();
+
         $lines = file(
             Storage::path($this->path),
             FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES
@@ -44,10 +47,17 @@ class ProcessProductImport implements ShouldQueue
 
         $headers = array_map('trim', str_getcsv(array_shift($lines)));
 
+        $rowNumber = 1; 
+
         foreach ($lines as $line) {
+            $rowNumber++;
             $values = str_getcsv($line);
 
             if (count($headers) !== count($values)) {
+                ImportError::create([
+                    'row_number' => $rowNumber,
+                    'error_message' => 'Jumlah kolom tidak sesuai dengan header.',
+                ]);
                 continue;
             }
 
@@ -60,6 +70,11 @@ class ProcessProductImport implements ShouldQueue
             ]);
 
             if ($validator->fails()) {
+                $errorMsg = implode(', ', $validator->errors()->all());
+                ImportError::create([
+                    'row_number' => $rowNumber,
+                    'error_message' => $errorMsg,
+                ]);
                 continue;
             }
 
