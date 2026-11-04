@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\SalesReportExport;
 use App\Imports\ProductsImport;
 use App\Models\Product;
 use App\Models\Transaction;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportController extends Controller
@@ -122,6 +126,31 @@ class ReportController extends Controller
         Excel::import($import, $request->file('csv'), null, \Maatwebsite\Excel\Excel::CSV);
 
         return back()->with('success', "{$import->created} produk baru, {$import->updated} diperbarui. (Laravel Excel)");
+    }
+
+    public function exportExcel(Request $request): BinaryFileResponse
+    {
+        [$from, $to] = $this->resolveDateRange($request);
+
+        return Excel::download(
+            new SalesReportExport($this->filteredQuery($from, $to)),
+            'laporan-penjualan.xlsx',
+        );
+    }
+
+    public function exportPdf(Request $request): Response
+    {
+        [$from, $to] = $this->resolveDateRange($request);
+
+        $pdf = Pdf::loadView('reports.pdf', [
+            'totalPenjualan' => $this->filteredQuery($from, $to)->sum('total'),
+            'jumlahTransaksi' => $this->filteredQuery($from, $to)->count(),
+            'transactions' => $this->filteredQuery($from, $to)->latest()->limit(50)->get(),
+            'from' => $from->toDateString(),
+            'to' => $to->toDateString(),
+        ]);
+
+        return $pdf->download('laporan-penjualan.pdf');
     }
 
     private function resolveDateRange(Request $request): array
