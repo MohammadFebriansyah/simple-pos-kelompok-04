@@ -14,6 +14,7 @@
         <input type="date" name="to" value="{{ $to }}" class="mt-1 block border rounded-md px-3 py-2 text-sm">
     </label>
     <button type="submit" class="bg-slate-900 text-white px-4 py-2 rounded-md text-sm">Filter</button>
+    <a href="{{ route('reports.export.csv', ['from' => $from, 'to' => $to]) }}" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm">Export CSV</a>
 </form>
 
 <div class="bg-white border rounded-md p-4 max-w-sm">
