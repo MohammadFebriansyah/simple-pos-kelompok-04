@@ -17,6 +17,7 @@
 <body>
     <h1>Laporan Penjualan</h1>
     <p>Periode {{ $from }} s.d. {{ $to }}</p>
+    <p>Kategori: {{ $categoryName ?? 'Semua Kategori' }}</p>
     <p>Total penjualan: <strong>Rp {{ number_format($totalPenjualan) }}</strong> dari {{ $jumlahTransaksi }} transaksi</p>
 
     <h2>Produk Terlaris</h2>
