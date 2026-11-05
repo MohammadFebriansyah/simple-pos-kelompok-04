@@ -101,4 +101,56 @@ class ReportExportTest extends TestCase
         $response->assertOk();
         $response->assertDownload('laporan-penjualan.pdf');
     }
+
+    public function test_reports_can_be_filtered_by_category(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $minuman = new Category();
+        $minuman->name = 'Minuman';
+        $minuman->save();
+
+        $makanan = new Category();
+        $makanan->name = 'Makanan';
+        $makanan->save();
+
+        $kopi = Product::create(['category_id' => $minuman->id, 'name' => 'Kopi', 'price' => 15000, 'stock' => 100]);
+        $roti = Product::create(['category_id' => $makanan->id, 'name' => 'Roti', 'price' => 10000, 'stock' => 100]);
+
+        // Transaksi campuran: 1 kopi + 2 roti
+        $t1 = Transaction::create(['user_id' => $admin->id, 'total' => 35000]);
+        TransactionDetail::create(['transaction_id' => $t1->id, 'product_id' => $kopi->id, 'qty' => 1, 'subtotal' => 15000]);
+        TransactionDetail::create(['transaction_id' => $t1->id, 'product_id' => $roti->id, 'qty' => 2, 'subtotal' => 20000]);
+
+        // Transaksi hanya roti
+        $t2 = Transaction::create(['user_id' => $admin->id, 'total' => 10000]);
+        TransactionDetail::create(['transaction_id' => $t2->id, 'product_id' => $roti->id, 'qty' => 1, 'subtotal' => 10000]);
+
+        $this->get('/reports')
+            ->assertOk()
+            ->assertViewHas('totalPenjualan', 45000)
+            ->assertViewHas('jumlahTransaksi', 2);
+
+        $this->get('/reports?category_id='.$minuman->id)
+            ->assertOk()
+            ->assertViewHas('totalPenjualan', 15000)
+            ->assertViewHas('jumlahTransaksi', 1)
+            ->assertViewHas('categoryId', $minuman->id);
+
+        $this->get('/reports?category_id='.$makanan->id)
+            ->assertViewHas('totalPenjualan', 30000)
+            ->assertViewHas('jumlahTransaksi', 2);
+
+        $method = new ReflectionMethod(ReportController::class, 'topProducts');
+        $top = $method->invoke(new ReportController(), now()->startOfMonth(), now()->endOfDay(), $minuman->id);
+        $this->assertCount(1, $top);
+        $this->assertEquals('Kopi', $top->first()->name);
+
+        $this->get('/reports/export/csv?category_id='.$minuman->id)->assertOk()->assertDownload('laporan-penjualan.csv');
+        $this->get('/reports/export/xlsx?category_id='.$minuman->id)->assertOk()->assertDownload('laporan-penjualan.xlsx');
+        $this->get('/reports/export/pdf?category_id='.$minuman->id)->assertOk()->assertDownload('laporan-penjualan.pdf');
+
+        $this->get('/reports?category_id=99999')->assertSessionHasErrors('category_id');
+    }
 }
