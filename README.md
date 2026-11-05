@@ -1,4 +1,4 @@
-# Simple POS - Kelompok 02 (SIB 3E)
+# Simple POS - Kelompok 02 (SIB 3B)
 
 Aplikasi Point of Sale (POS) berbasis web menggunakan Laravel 11 dengan sistem otorisasi dan kontrol akses berbasis peran (*Role-Based Access Control*).
 
@@ -104,3 +104,29 @@ Berikut adalah skenario pengujian manual untuk setiap peran yang ada pada aplika
 - Pengguna berhasil login dan diarahkan ke `/pos`.
 - Halaman `/transactions` dapat diakses secara normal (HTTP 200).
 - Saat mengakses `/products` atau `/categories`, sistem menampilkan error **HTTP 403 Forbidden**.
+
+
+## Tantangan Mandiri Kelompok: Identifikasi Proses yang Layak Dipindahkan ke Queued Job
+
+### Proses yang Dipilih
+
+Proses yang diidentifikasi untuk dipindahkan ke queued job adalah **Export Laporan Penjualan ke Excel**.
+
+### Alasan Pemilihan
+
+Fitur export laporan penjualan ke Excel merupakan salah satu proses pada aplikasi Simple POS yang berpotensi membutuhkan waktu pemrosesan cukup lama, terutama ketika jumlah transaksi semakin banyak. Proses ini melibatkan pengambilan data transaksi berdasarkan rentang tanggal dan pembentukan file Excel menggunakan Laravel Excel.
+
+Apabila seluruh proses dilakukan secara langsung melalui HTTP request, pengguna harus menunggu hingga file selesai dibuat sebelum mendapatkan hasilnya. Kondisi tersebut berpotensi memperlambat respons aplikasi dan meningkatkan risiko request mengalami timeout ketika data yang diproses berjumlah besar.
+
+Oleh karena itu, proses export laporan penjualan ke Excel dinilai layak dipindahkan ke queued job agar pembentukan file dapat dilakukan di background oleh queue worker. Dengan demikian, pengguna dapat memperoleh respons lebih cepat tanpa harus menunggu seluruh proses export selesai.
+
+### Manfaat Penggunaan Queued Job
+
+1. Mengurangi waktu tunggu pengguna ketika meminta export laporan.
+2. Menjaga respons aplikasi agar tetap cepat ketika memproses data transaksi dalam jumlah besar.
+3. Memungkinkan proses pembuatan file Excel dijalankan secara asynchronous melalui queue worker.
+4. Memisahkan proses pembentukan laporan dari proses HTTP request sehingga pengolahan data lebih terorganisasi.
+
+### Kesimpulan
+
+Berdasarkan pertimbangan tersebut, proses Export Laporan Penjualan ke Excel merupakan salah satu proses yang layak dipindahkan ke queued job karena pembentukan file dapat membutuhkan waktu lebih lama seiring bertambahnya jumlah transaksi. Penerapan queue diharapkan dapat meningkatkan responsivitas aplikasi dan memberikan pengalaman penggunaan yang lebih baik.
