@@ -8,7 +8,7 @@ use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class SalesReportExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping
+class SalesReportExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize
 {
     public function __construct(private Builder $query) {}
 
@@ -27,7 +27,7 @@ class SalesReportExport implements FromQuery, ShouldAutoSize, WithHeadings, With
         return [
             $transaction->id,
             $transaction->created_at->format('Y-m-d H:i:s'),
-            $transaction->user->name,
+            $transaction->user?->name ?? '-',
             $transaction->total,
         ];
     }
