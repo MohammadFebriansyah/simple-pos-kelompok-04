@@ -306,3 +306,17 @@ components:
     bearerAuth:
       type: http
       scheme: bearer
+
+
+
+# Perbandingan Pengalaman Pengujian API:
+# Pengujian ketiga endpoint REST API menggunakan Postman terasa lebih mudah
+# dan praktis dibandingkan curl karena Postman menyediakan antarmuka grafis
+# untuk mengatur HTTP method, URL, headers, authorization, dan request body.
+# Selain itu, response dari server ditampilkan dalam format yang lebih mudah
+# dibaca sehingga memudahkan proses pemeriksaan hasil pengujian. Sementara itu,
+# curl menggunakan perintah melalui terminal sehingga pengguna harus
+# menuliskan konfigurasi request secara manual. Namun, curl lebih praktis
+# untuk pengujian melalui script dan otomatisasi. Kedua alat tersebut dapat
+# digunakan untuk menguji endpoint REST API dengan hasil yang sama selama
+# konfigurasi request yang dikirim sesuai.
