@@ -39,7 +39,7 @@ class ApiClientDemo extends Command
 
         $login = Http::acceptJson()->post("{$baseUrl}/api/login", [
             'email' => 'kasir@pos.test',
-            'password' => 'password',
+            'password' => 'password-salah',
         ]);
 
         if ($login->failed()) {
