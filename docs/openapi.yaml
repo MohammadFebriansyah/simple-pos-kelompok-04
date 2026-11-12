@@ -33,28 +33,106 @@ paths:
                   message: { type: string }
   /api/products:
     get:
-      summary: Ambil daftar produk
+      summary: Ambil daftar produk (berpaginasi)
+      description: |
+        Mengembalikan daftar produk berpaginasi, beserta nama kategorinya.
+        Bisa difilter per kategori, dicari berdasarkan nama, dan diurutkan.
+        Semua query parameter yang dikirim ikut terbawa di URL `links` dan `meta.links`,
+        jadi klien cukup mengikuti `links.next` untuk mengambil halaman berikutnya.
+
+        Token harus memiliki ability `products:read`. Batas laju: 60 request per menit per user.
+      operationId: listProducts
+      tags: [Products]
       security:
         - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - name: category_id
+          in: query
+          required: false
+          description: Hanya tampilkan produk dari kategori ini. ID harus ada di tabel kategori.
+          schema:
+            type: integer
+            minimum: 1
+          example: 2
+        - name: q
+          in: query
+          required: false
+          description: Cari produk yang namanya mengandung teks ini (tidak peka huruf besar/kecil).
+          schema:
+            type: string
+            minLength: 2
+          example: kopi
+        - name: sort
+          in: query
+          required: false
+          description: Kolom pengurutan. Awalan `-` berarti urutan menurun.
+          schema:
+            type: string
+            enum: [name, -name, price, -price]
+            default: name
+          example: -price
       responses:
         '200':
-          description: Daftar produk
+          description: Satu halaman daftar produk
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/X-RateLimit-Limit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/X-RateLimit-Remaining'
           content:
             application/json:
               schema:
                 type: object
+                required: [data, links, meta]
                 properties:
                   data:
                     type: array
                     items:
-                      type: object
-                      properties:
-                        id: { type: integer }
-                        name: { type: string }
-                        price: { type: integer }
-                        category: { type: string }
+                      $ref: '#/components/schemas/Product'
+                  links:
+                    $ref: '#/components/schemas/PaginationLinks'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+              example:
+                data:
+                  - { id: 257, name: Kopi Susu, price: 15000, category: Minuman }
+                  - { id: 93, name: Teh Manis, price: 5000, category: Minuman }
+                links:
+                  first: http://127.0.0.1:8000/api/products?per_page=2&sort=-price&page=1
+                  last: http://127.0.0.1:8000/api/products?per_page=2&sort=-price&page=150
+                  prev: null
+                  next: http://127.0.0.1:8000/api/products?per_page=2&sort=-price&page=2
+                meta:
+                  current_page: 1
+                  from: 1
+                  last_page: 150
+                  links:
+                    - { url: null, label: '&laquo; Previous', page: null, active: false }
+                    - { url: 'http://127.0.0.1:8000/api/products?per_page=2&sort=-price&page=1', label: '1', page: 1, active: true }
+                    - { url: 'http://127.0.0.1:8000/api/products?per_page=2&sort=-price&page=2', label: 'Next &raquo;', page: 2, active: false }
+                  path: http://127.0.0.1:8000/api/products
+                  per_page: 2
+                  to: 2
+                  total: 300
         '401':
-          description: Token tidak ada atau tidak valid
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/MissingAbility'
+        '422':
+          description: Query parameter tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              example:
+                message: The selected sort is invalid. (and 1 more error)
+                errors:
+                  sort: [The selected sort is invalid.]
+                  per_page: [The per page field must not be greater than 100.]
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /api/transactions:
     post:
       summary: Buat transaksi baru
@@ -91,6 +169,139 @@ paths:
         '422':
           description: Input tidak valid, misalnya product_id tidak ditemukan
 components:
+  parameters:
+    Page:
+      name: page
+      in: query
+      required: false
+      description: |
+        Nomor halaman, dimulai dari 1. Nilai yang bukan bilangan bulat positif dianggap 1.
+        Halaman di luar `meta.last_page` mengembalikan `data` kosong, bukan error.
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      example: 1
+    PerPage:
+      name: per_page
+      in: query
+      required: false
+      description: Jumlah item per halaman.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 15
+      example: 15
+  headers:
+    X-RateLimit-Limit:
+      description: Jumlah maksimum request per menit.
+      schema: { type: integer, example: 60 }
+    X-RateLimit-Remaining:
+      description: Sisa request yang masih boleh dikirim pada menit ini.
+      schema: { type: integer, example: 59 }
+  schemas:
+    Product:
+      type: object
+      required: [id, name, price, category]
+      properties:
+        id: { type: integer, example: 257 }
+        name: { type: string, example: Kopi Susu }
+        price:
+          type: integer
+          minimum: 0
+          description: Harga dalam rupiah (bilangan bulat, tanpa desimal).
+          example: 15000
+        category:
+          type: string
+          description: Nama kategori produk.
+          example: Minuman
+    PaginationLinks:
+      type: object
+      required: [first, last, prev, next]
+      properties:
+        first: { type: string, format: uri }
+        last: { type: string, format: uri }
+        prev:
+          type: string
+          format: uri
+          nullable: true
+          description: null jika sedang di halaman pertama.
+        next:
+          type: string
+          format: uri
+          nullable: true
+          description: null jika sedang di halaman terakhir.
+    PaginationMeta:
+      type: object
+      required: [current_page, from, last_page, links, path, per_page, to, total]
+      properties:
+        current_page: { type: integer, example: 1 }
+        from:
+          type: integer
+          nullable: true
+          description: Nomor urut item pertama di halaman ini; null jika halaman kosong.
+          example: 1
+        last_page: { type: integer, example: 150 }
+        links:
+          type: array
+          description: Tautan untuk navigasi nomor halaman (Previous, 1, 2, ..., Next).
+          items:
+            type: object
+            properties:
+              url: { type: string, format: uri, nullable: true }
+              label: { type: string }
+              page: { type: integer, nullable: true }
+              active: { type: boolean }
+        path: { type: string, format: uri }
+        per_page: { type: integer, example: 15 }
+        to:
+          type: integer
+          nullable: true
+          description: Nomor urut item terakhir di halaman ini; null jika halaman kosong.
+          example: 15
+        total:
+          type: integer
+          description: Jumlah seluruh produk yang cocok dengan filter.
+          example: 300
+    Message:
+      type: object
+      properties:
+        message: { type: string }
+    ValidationError:
+      type: object
+      required: [message, errors]
+      properties:
+        message: { type: string }
+        errors:
+          type: object
+          description: Daftar pesan error per nama field.
+          additionalProperties:
+            type: array
+            items: { type: string }
+  responses:
+    Unauthenticated:
+      description: Token tidak ada, tidak valid, atau sudah kedaluwarsa
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Message' }
+          example: { message: Unauthenticated. }
+    MissingAbility:
+      description: Token valid tetapi tidak memiliki ability yang dibutuhkan
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Message' }
+          example: { message: Invalid ability provided. }
+    TooManyRequests:
+      description: Batas laju terlampaui; tunggu sesuai header Retry-After
+      headers:
+        Retry-After:
+          description: Jumlah detik sebelum boleh mengirim request lagi.
+          schema: { type: integer }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Message' }
+          example: { message: Too Many Attempts. }
   securitySchemes:
     bearerAuth:
       type: http
