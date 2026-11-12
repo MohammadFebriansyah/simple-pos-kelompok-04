@@ -2,8 +2,12 @@ openapi: 3.0.0
 info:
   title: Simple POS API
   version: 1.0.0
+  description: Semua endpoint berada di bawah prefix versi `/api/v1`.
+servers:
+  - url: http://127.0.0.1:8000
+    description: Server development lokal (php artisan serve)
 paths:
-  /api/login:
+  /api/v1/login:
     post:
       summary: Login dan dapatkan token
       requestBody:
@@ -31,7 +35,7 @@ paths:
                 type: object
                 properties:
                   message: { type: string }
-  /api/products:
+  /api/v1/products:
     get:
       summary: Ambil daftar produk (berpaginasi)
       description: |
@@ -100,19 +104,19 @@ paths:
                   - { id: 257, name: Kopi Susu, price: 15000, category: Minuman }
                   - { id: 93, name: Teh Manis, price: 5000, category: Minuman }
                 links:
-                  first: http://127.0.0.1:8000/api/products?per_page=2&sort=-price&page=1
-                  last: http://127.0.0.1:8000/api/products?per_page=2&sort=-price&page=150
+                  first: http://127.0.0.1:8000/api/v1/products?per_page=2&sort=-price&page=1
+                  last: http://127.0.0.1:8000/api/v1/products?per_page=2&sort=-price&page=150
                   prev: null
-                  next: http://127.0.0.1:8000/api/products?per_page=2&sort=-price&page=2
+                  next: http://127.0.0.1:8000/api/v1/products?per_page=2&sort=-price&page=2
                 meta:
                   current_page: 1
                   from: 1
                   last_page: 150
                   links:
                     - { url: null, label: '&laquo; Previous', page: null, active: false }
-                    - { url: 'http://127.0.0.1:8000/api/products?per_page=2&sort=-price&page=1', label: '1', page: 1, active: true }
-                    - { url: 'http://127.0.0.1:8000/api/products?per_page=2&sort=-price&page=2', label: 'Next &raquo;', page: 2, active: false }
-                  path: http://127.0.0.1:8000/api/products
+                    - { url: 'http://127.0.0.1:8000/api/v1/products?per_page=2&sort=-price&page=1', label: '1', page: 1, active: true }
+                    - { url: 'http://127.0.0.1:8000/api/v1/products?per_page=2&sort=-price&page=2', label: 'Next &raquo;', page: 2, active: false }
+                  path: http://127.0.0.1:8000/api/v1/products
                   per_page: 2
                   to: 2
                   total: 300
@@ -133,7 +137,7 @@ paths:
                   per_page: [The per page field must not be greater than 100.]
         '429':
           $ref: '#/components/responses/TooManyRequests'
-  /api/transactions:
+  /api/v1/transactions:
     post:
       summary: Buat transaksi baru
       security:
