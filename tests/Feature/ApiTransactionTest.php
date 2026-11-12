@@ -22,7 +22,7 @@ class ApiTransactionTest extends TestCase
 
     public function test_guest_cannot_create_transaction(): void
     {
-        $this->postJson('/api/transactions', $this->payload())
+        $this->postJson('/api/v1/transactions', $this->payload())
             ->assertUnauthorized(); // 401
     }
 
@@ -30,7 +30,7 @@ class ApiTransactionTest extends TestCase
     {
         Sanctum::actingAs(User::factory()->create(), ['products:read']);
 
-        $this->postJson('/api/transactions', $this->payload(), ['Idempotency-Key' => 'k1'])
+        $this->postJson('/api/v1/transactions', $this->payload(), ['Idempotency-Key' => 'k1'])
             ->assertForbidden(); // 403
     }
 
@@ -39,7 +39,7 @@ class ApiTransactionTest extends TestCase
         Sanctum::actingAs(User::factory()->create(), ['transactions:create']);
 
         $this->postJson(
-            '/api/transactions',
+            '/api/v1/transactions',
             ['items' => [['product_id' => 99999, 'qty' => 1]]],
             ['Idempotency-Key' => 'k2']
         )
@@ -54,11 +54,11 @@ class ApiTransactionTest extends TestCase
         $payload = $this->payload();
         $headers = ['Idempotency-Key' => 'k3'];
 
-        $first = $this->postJson('/api/transactions', $payload, $headers)
+        $first = $this->postJson('/api/v1/transactions', $payload, $headers)
             ->assertCreated() // 201
             ->assertJsonPath('data.total', 30000);
 
-        $this->postJson('/api/transactions', $payload, $headers)
+        $this->postJson('/api/v1/transactions', $payload, $headers)
             ->assertCreated()
             ->assertHeader('Idempotent-Replayed', 'true')
             ->assertJsonPath('data.id', $first->json('data.id'));
@@ -77,12 +77,12 @@ class ApiTransactionTest extends TestCase
 
         Sanctum::actingAs(User::factory()->create(), ['transactions:read']);
 
-        $this->getJson("/api/transactions/{$transaction->id}")
+        $this->getJson("/api/v1/transactions/{$transaction->id}")
             ->assertForbidden(); // 403
 
         Sanctum::actingAs($owner, ['transactions:read']);
 
-        $this->getJson("/api/transactions/{$transaction->id}")
+        $this->getJson("/api/v1/transactions/{$transaction->id}")
             ->assertOk()
             ->assertJsonPath('data.id', $transaction->id);
     }

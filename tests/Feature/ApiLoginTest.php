@@ -15,7 +15,7 @@ class ApiLoginTest extends TestCase
     {
         $user = User::factory()->create(['email' => 'kasir@pos.test', 'password' => 'password']);
 
-        $response = $this->postJson('/api/login', [
+        $response = $this->postJson('/api/v1/login', [
             'email' => 'kasir@pos.test',
             'password' => 'password',
         ])->assertOk()->assertJsonStructure(['token']);
@@ -33,7 +33,7 @@ class ApiLoginTest extends TestCase
         User::factory()->create(['email' => 'kasir@pos.test', 'password' => 'password']);
 
         foreach (['kasir@pos.test', 'tidak-ada@pos.test'] as $email) {
-            $this->postJson('/api/login', ['email' => $email, 'password' => 'salah'])
+            $this->postJson('/api/v1/login', ['email' => $email, 'password' => 'salah'])
                 ->assertUnauthorized()
                 ->assertExactJson(['message' => 'Kredensial tidak valid.']);
         }
@@ -43,11 +43,11 @@ class ApiLoginTest extends TestCase
 
     public function test_login_rejects_missing_or_invalid_input(): void
     {
-        $this->postJson('/api/login')
+        $this->postJson('/api/v1/login')
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['email', 'password']);
 
-        $this->postJson('/api/login', ['email' => 'bukan-email', 'password' => 'password'])
+        $this->postJson('/api/v1/login', ['email' => 'bukan-email', 'password' => 'password'])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('email');
 

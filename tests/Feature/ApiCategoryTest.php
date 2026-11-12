@@ -13,15 +13,15 @@ class ApiCategoryTest extends TestCase
 
     public function test_missing_or_invalid_token_is_rejected(): void
     {
-        $this->getJson('/api/categories')->assertUnauthorized();
-        $this->withToken('token-tidak-valid')->getJson('/api/categories')->assertUnauthorized();
+        $this->getJson('/api/v1/categories')->assertUnauthorized();
+        $this->withToken('token-tidak-valid')->getJson('/api/v1/categories')->assertUnauthorized();
     }
 
     public function test_token_without_category_ability_is_forbidden(): void
     {
         $token = User::factory()->create()->createToken('produk', ['products:read']);
 
-        $this->withToken($token->plainTextToken)->getJson('/api/categories')->assertForbidden();
+        $this->withToken($token->plainTextToken)->getJson('/api/v1/categories')->assertForbidden();
     }
 
     public function test_login_token_returns_categories_with_only_id_and_name(): void
@@ -30,14 +30,14 @@ class ApiCategoryTest extends TestCase
         $minuman = Category::create(['name' => 'Minuman']);
         $makanan = Category::create(['name' => 'Makanan']);
 
-        $login = $this->postJson('/api/login', [
+        $login = $this->postJson('/api/v1/login', [
             'email' => 'kasir@pos.test',
             'password' => 'password',
         ])->assertOk();
 
         // Request berikutnya menggunakan bearer token, tanpa identitas sesi login.
         $this->app['auth']->forgetGuards();
-        $this->withToken($login->json('token'))->getJson('/api/categories')
+        $this->withToken($login->json('token'))->getJson('/api/v1/categories')
             ->assertOk()
             ->assertExactJson(['data' => [
                 ['id' => $makanan->id, 'name' => 'Makanan'],
@@ -49,7 +49,7 @@ class ApiCategoryTest extends TestCase
     {
         $token = User::factory()->create()->createToken('kategori', ['categories:read']);
 
-        $this->withToken($token->plainTextToken)->getJson('/api/categories')
+        $this->withToken($token->plainTextToken)->getJson('/api/v1/categories')
             ->assertOk()
             ->assertExactJson(['data' => []]);
     }

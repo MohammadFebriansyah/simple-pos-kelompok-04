@@ -14,12 +14,12 @@ class ApiProductTest extends TestCase
 
     public function test_missing_or_invalid_token_is_rejected(): void
     {
-        $this->getJson('/api/products')
+        $this->getJson('/api/v1/products')
             ->assertUnauthorized()
             ->assertJsonPath('message', 'Unauthenticated.');
 
-        $this->withToken('token-tidak-valid')->getJson('/api/products')->assertUnauthorized();
-        $this->postJson('/api/logout')->assertUnauthorized();
+        $this->withToken('token-tidak-valid')->getJson('/api/v1/products')->assertUnauthorized();
+        $this->postJson('/api/v1/logout')->assertUnauthorized();
     }
 
     public function test_bearer_token_returns_only_the_product_resource_fields(): void
@@ -34,7 +34,7 @@ class ApiProductTest extends TestCase
         ]);
         $token = $user->createToken('uji-produk')->plainTextToken;
 
-        $this->withToken($token)->getJson('/api/products')
+        $this->withToken($token)->getJson('/api/v1/products')
             ->assertOk()
             ->assertExactJson(['data' => [[
                 'id' => $product->id,
@@ -50,7 +50,7 @@ class ApiProductTest extends TestCase
         $token = $user->createToken('uji-logout');
         $otherToken = $user->createToken('perangkat-lain');
 
-        $this->withToken($token->plainTextToken)->postJson('/api/logout')
+        $this->withToken($token->plainTextToken)->postJson('/api/v1/logout')
             ->assertOk()
             ->assertExactJson(['message' => 'Logout berhasil.']);
 
@@ -59,10 +59,10 @@ class ApiProductTest extends TestCase
 
         // Bersihkan guard antar-request agar token diperiksa lagi dari database.
         $this->app['auth']->forgetGuards();
-        $this->withToken($token->plainTextToken)->getJson('/api/products')->assertUnauthorized();
+        $this->withToken($token->plainTextToken)->getJson('/api/v1/products')->assertUnauthorized();
 
         $this->app['auth']->forgetGuards();
-        $this->withToken($otherToken->plainTextToken)->getJson('/api/products')
+        $this->withToken($otherToken->plainTextToken)->getJson('/api/v1/products')
             ->assertOk()
             ->assertExactJson(['data' => []]);
     }
